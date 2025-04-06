@@ -52,7 +52,7 @@ def open_case():
     for item in items:
         # Проверяем, попадает ли случайное число в диапазон для этого предмета
         if item[2] <= random_number <= item[3]:
-            return item[0], item[1]  # Возвращаем название и цену предмета
+            return item[0], item[1]  # Возвращаем название и цену предмета (в рублях)
     return None
 
 # Интерфейс Streamlit
@@ -81,7 +81,8 @@ if st.button("Открыть кейс"):
         for i in range(num_cases):
             result = open_case()
             if result:
-                st.write(f"Кейс {i+1}: Вы выиграли: {result[0]} - Цена: {result[1]}$")
+                st.write(f"Кейс {i+1}: Вы выиграли: {result[0]} - Цена: {result[1]} рублей")
+                balance += result[1]  # Прибавляем стоимость скина к балансу
             else:
                 st.write(f"Кейс {i+1}: Попробуйте снова!")
         
