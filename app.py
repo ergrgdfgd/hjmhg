@@ -42,7 +42,8 @@ items = [
 ]
 
 # Начальный баланс пользователя (можно изменить)
-balance = 100  # Начальный баланс в рублях
+if 'balance' not in st.session_state:
+    st.session_state.balance = 100  # Начальный баланс в рублях
 
 # Функция для имитации выпадения предмета
 def open_case():
@@ -59,7 +60,7 @@ def open_case():
 st.title("Симулятор кейса")
 
 # Отображаем текущий баланс
-st.write(f"Ваш текущий баланс: {balance} рублей")
+st.write(f"Ваш текущий баланс: {st.session_state.balance} рублей")
 
 # Ввод количества кейсов
 num_cases = st.number_input("Выберите количество кейсов (1-10)", min_value=1, max_value=10, value=1)
@@ -72,18 +73,18 @@ if st.button("Открыть кейс"):
     total_cost = case_price * num_cases  # Стоимость всех кейсов
     st.write(f"Общая стоимость: {total_cost} рублей")
     
-    if balance < total_cost:
+    if st.session_state.balance < total_cost:
         st.write("У вас недостаточно средств для открытия выбранного количества кейсов.")
     else:
-        balance -= total_cost  # Уменьшаем баланс на стоимость кейсов
+        st.session_state.balance -= total_cost  # Уменьшаем баланс на стоимость кейсов
         
         # Открываем выбранное количество кейсов
         for i in range(num_cases):
             result = open_case()
             if result:
                 st.write(f"Кейс {i+1}: Вы выиграли: {result[0]} - Цена: {result[1]} рублей")
-                balance += result[1]  # Прибавляем стоимость скина к балансу
+                st.session_state.balance += result[1]  # Прибавляем стоимость скина к балансу
             else:
                 st.write(f"Кейс {i+1}: Попробуйте снова!")
         
-        st.write(f"Ваш оставшийся баланс: {balance} рублей")
+        st.write(f"Ваш оставшийся баланс: {st.session_state.balance} рублей")
