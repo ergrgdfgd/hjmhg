@@ -41,6 +41,9 @@ items = [
     ("Desert Eagle Код красный", 2314.15, 9999948, 10000000, 0.0005)
 ]
 
+# Начальный баланс пользователя (можно изменить)
+balance = 100  # Начальный баланс в рублях
+
 # Функция для имитации выпадения предмета
 def open_case():
     # Генерируем случайное число от 1 до 10000000
@@ -55,18 +58,31 @@ def open_case():
 # Интерфейс Streamlit
 st.title("Симулятор кейса")
 
+# Отображаем текущий баланс
+st.write(f"Ваш текущий баланс: {balance} рублей")
+
 # Ввод количества кейсов
 num_cases = st.number_input("Выберите количество кейсов (1-10)", min_value=1, max_value=10, value=1)
 
+# Цена за открытие одного кейса
+case_price = 5
+
 # Кнопка для открытия кейсов
 if st.button("Открыть кейс"):
-    total_cost = 5 * num_cases  # Цена всех кейсов
+    total_cost = case_price * num_cases  # Стоимость всех кейсов
     st.write(f"Общая стоимость: {total_cost} рублей")
     
-    # Открываем выбранное количество кейсов
-    for i in range(num_cases):
-        result = open_case()
-        if result:
-            st.write(f"Вы выиграли: {result[0]} - Цена: {result[1]}$ (Кейс {i+1})")
-        else:
-            st.write(f"Кейс {i+1}: Попробуйте снова!")
+    if balance < total_cost:
+        st.write("У вас недостаточно средств для открытия выбранного количества кейсов.")
+    else:
+        balance -= total_cost  # Уменьшаем баланс на стоимость кейсов
+        
+        # Открываем выбранное количество кейсов
+        for i in range(num_cases):
+            result = open_case()
+            if result:
+                st.write(f"Кейс {i+1}: Вы выиграли: {result[0]} - Цена: {result[1]}$")
+            else:
+                st.write(f"Кейс {i+1}: Попробуйте снова!")
+        
+        st.write(f"Ваш оставшийся баланс: {balance} рублей")
