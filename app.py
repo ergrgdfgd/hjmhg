@@ -1,24 +1,25 @@
+import streamlit as st
 import numpy as np
+import pandas as pd
 
-# === Настройки ===
 FIELD_SIZE = 10
-SHIP_SIZES = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
+INITIAL_SHIP_SIZES = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
 
-# === Начальное состояние ===
-player_memory = np.zeros((FIELD_SIZE, FIELD_SIZE), dtype=int)
-remaining_ships = SHIP_SIZES.copy()
+# === Session State ===
+if "player_memory" not in st.session_state:
+    st.session_state.player_memory = np.zeros((FIELD_SIZE, FIELD_SIZE), dtype=int)
+    st.session_state.remaining_ships = INITIAL_SHIP_SIZES.copy()
 
 def update_player_shot(x, y, result):
-    global player_memory, remaining_ships
     if result == 'miss':
-        player_memory[x, y] = -1
+        st.session_state.player_memory[x, y] = -1
     elif result == 'hit':
-        player_memory[x, y] = 1
+        st.session_state.player_memory[x, y] = 1
     elif result.startswith('sunk'):
-        player_memory[x, y] = 1
+        st.session_state.player_memory[x, y] = 1
         ship_size = int(result.split('_')[1])
-        if ship_size in remaining_ships:
-            remaining_ships.remove(ship_size)
+        if ship_size in st.session_state.remaining_ships:
+            st.session_state.remaining_ships.remove(ship_size)
 
 def build_heatmap(memory, remaining_ship_sizes):
     heatmap = np.zeros_like(memory)
@@ -36,54 +37,45 @@ def build_heatmap(memory, remaining_ship_sizes):
     return heatmap
 
 def suggest_next_target():
-    heatmap = build_heatmap(player_memory, remaining_ships)
+    heatmap = build_heatmap(st.session_state.player_memory, st.session_state.remaining_ships)
     max_val = np.max(heatmap)
     if max_val == 0:
         return "Нет доступных клеток", heatmap
     targets = np.argwhere(heatmap == max_val)
     return targets.tolist(), heatmap
 
-def print_board(board):
-    print("    " + " ".join(str(i) for i in range(FIELD_SIZE)))
-    for i in range(FIELD_SIZE):
-        row = [f"{board[i, j]:2d}" for j in range(FIELD_SIZE)]
-        print(f"{i:2d} | {' '.join(row)}")
+# === Streamlit Interface ===
 
-# === Основной цикл ===
-if __name__ == "__main__":
-    print("=== Морской бой — помощник по стрельбе ===")
-    print("Формат ввода: X Y результат (пример: 3 4 hit или 5 6 sunk_2 или 1 1 miss)")
-    print("Команда 'exit' — выйти\n")
+st.title("🎯 Морской бой — AI-помощник")
+st.markdown("Вводи координаты и результат выстрела. Бот подскажет лучшие клетки для следующего выстрела.")
 
-    while True:
-        try:
-            user_input = input("Введите выстрел и результат: ").strip().lower()
-            if user_input == 'exit':
-                break
-            parts = user_input.split()
-            if len(parts) != 3:
-                print("❌ Неверный формат. Пример: 3 4 hit")
-                continue
+col1, col2, col3 = st.columns(3)
+with col1:
+    x = st.number_input("Координата X", min_value=0, max_value=FIELD_SIZE - 1, step=1)
+with col2:
+    y = st.number_input("Координата Y", min_value=0, max_value=FIELD_SIZE - 1, step=1)
+with col3:
+    result = st.selectbox("Результат", ["miss", "hit"] + [f"sunk_{s}" for s in set(INITIAL_SHIP_SIZES)])
 
-            x, y = int(parts[0]), int(parts[1])
-            if not (0 <= x < FIELD_SIZE and 0 <= y < FIELD_SIZE):
-                print("❌ Координаты вне поля.")
-                continue
+if st.button("➕ Добавить выстрел"):
+    update_player_shot(int(x), int(y), result)
 
-            result = parts[2]
-            if result not in ['miss', 'hit'] and not result.startswith('sunk_'):
-                print("❌ Неверный результат. Используй miss, hit или sunk_N (например, sunk_3)")
-                continue
+st.markdown("### 📌 Память игрока")
+st.dataframe(pd.DataFrame(st.session_state.player_memory))
 
-            update_player_shot(x, y, result)
-            next_targets, heatmap = suggest_next_target()
+next_targets, heatmap = suggest_next_target()
 
-            print("\n🎯 Лучшие клетки для следующего выстрела:")
-            for t in next_targets:
-                print(f" -> {tuple(t)}")
+st.markdown("### 🔥 Рекомендованные клетки для следующего выстрела:")
+if isinstance(next_targets, str):
+    st.warning(next_targets)
+else:
+    for t in next_targets:
+        st.write(f"👉 Клетка: ({t[0]}, {t[1]})")
 
-            print("\n📊 Тепловая карта вероятностей:")
-            print_board(heatmap)
-            print("\n")
-        except Exception as e:
-            print(f"❌ Ошибка: {e}")
+st.markdown("### 🌡️ Тепловая карта вероятностей")
+st.dataframe(pd.DataFrame(heatmap.astype(int)))
+
+if st.button("🔄 Сбросить всё"):
+    st.session_state.player_memory = np.zeros((FIELD_SIZE, FIELD_SIZE), dtype=int)
+    st.session_state.remaining_ships = INITIAL_SHIP_SIZES.copy()
+    st.success("Состояние сброшено!")
