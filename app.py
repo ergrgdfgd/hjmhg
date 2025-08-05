@@ -1,3 +1,4 @@
+st.cache_data.clear()
 # streamlit_battleship_bot.py
 import streamlit as st
 import numpy as np
