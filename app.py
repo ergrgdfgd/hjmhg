@@ -47,7 +47,7 @@ def suggest_next_target():
     targets = np.argwhere(heatmap == max_val)
     return targets, heatmap
 
-st.title("Морской Бой Бот")
+st.title("Морской Член Бот")
 st.write("Нажми на клетку, чтобы указать выстрел. Потом выбери результат.")
 
 selected_cell = None
