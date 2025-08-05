@@ -83,7 +83,7 @@ if st.session_state.last_click:
 
 # Показываем подсказку
 targets, heatmap = suggest_next_target()
-st.subheader("Лучшие клетки для следующего выстрела:")
+st.subheader("Лучшие врпанов для следующего выстрела:")
 for x, y in targets:
     st.markdown(f"- {x+1}{LETTERS[y]}")
 
